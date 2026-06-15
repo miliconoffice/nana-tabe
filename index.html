@@ -367,7 +367,7 @@ async function loginUsername() {
   if (!username) return alert("请起个名字吧～");
   if (password.length < 6) return alert("密码至少六位哦，太短了不安全 (｀・ω・´)");
 
-  const email = username + "@nana-tabe.local";
+  const email = username + "@nana-tabe.com";
 
   // 先尝试注册新用户
   let res = await fetch(AUTH_URL + "/signup", {
