@@ -54,4 +54,4 @@ cp config.example.js config.js
 
 ## 📄 License
 
-MIT — 随便用，记得好好吃饭 (´▽｀)
+CC BY-NC-SA 4.0 — 非商用 · 署名 · 相同方式共享。用了就得开源哦 (｀・ω・´)
