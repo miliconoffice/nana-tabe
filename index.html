@@ -173,8 +173,19 @@
     <div style="font-size:48px;margin-bottom:12px">🍽️</div>
     <h2>登录后同步偏好</h2>
     <p class="desc">忌口、偏好、腻了记录会在所有设备间同步</p>
-    <button class="btn-auth" onclick="loginGitHub()">使用 GitHub 登录</button>
-    <button class="btn-auth outline" onclick="document.getElementById('email-form').classList.toggle('hidden')">邮箱登录</button>
+
+    <!-- 用户名+密码登录 -->
+    <div class="email-form">
+      <input type="text" id="username-input" placeholder="起个名字吧～">
+      <input type="password" id="password-input" placeholder="密码（六位以上哦）">
+      <button class="btn-auth" onclick="loginUsername()">🚀 开始使用</button>
+      <p class="hint">新朋友自动注册，老朋友直接登录</p>
+    </div>
+
+    <p style="text-align:center;color:var(--text-dim);margin:16px 0;font-size:13px;">—— 或者 ——</p>
+
+    <button class="btn-auth outline" onclick="loginGitHub()">使用 GitHub 登录</button>
+    <button class="btn-auth outline" onclick="document.getElementById('email-form').classList.toggle('hidden')" style="margin-top:8px;">📧 邮箱登录</button>
     <div id="email-form" class="email-form hidden">
       <input type="email" id="email-input" placeholder="your@email.com">
       <button class="btn-auth" onclick="loginEmail()">发送魔法链接</button>
@@ -348,6 +359,59 @@ async function loginEmail() {
   } else {
     alert("发送失败，请检查邮箱地址");
   }
+}
+
+async function loginUsername() {
+  const username = document.getElementById("username-input").value.trim();
+  const password = document.getElementById("password-input").value;
+  if (!username) return alert("请起个名字吧～");
+  if (password.length < 6) return alert("密码至少六位哦，太短了不安全 (｀・ω・´)");
+
+  const email = username + "@nana-tabe.local";
+
+  // 先尝试注册新用户
+  let res = await fetch(AUTH_URL + "/signup", {
+    method: "POST",
+    headers: { "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password })
+  });
+
+  if (res.ok) {
+    // 新用户注册成功，signup 响应里自带 session
+    const data = await res.json();
+    session = { access_token: data.access_token, refresh_token: data.refresh_token };
+  } else {
+    const err = await res.json();
+    // 用户已存在 → 尝试登录
+    if (err.code === "user_already_exists" || err.msg?.includes("already")) {
+      res = await fetch(AUTH_URL + "/token?grant_type=password", {
+        method: "POST",
+        headers: { "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        session = { access_token: data.access_token, refresh_token: data.refresh_token };
+      } else {
+        alert("密码不对哦，想想看？或者换个名字试试 (´・ω・`)");
+        return;
+      }
+    } else {
+      alert("出了点问题……七号也不太明白 (´；ω；)\n" + (err.msg || err.message || ""));
+      return;
+    }
+  }
+
+  // 登录成功！
+  localStorage.setItem("qihao_session", JSON.stringify(session));
+  user = await fetch(AUTH_URL + "/user", { headers: getHeaders() }).then(r => r.json());
+  document.getElementById("btn-login").classList.add("hidden");
+  document.getElementById("btn-logout").classList.remove("hidden");
+  hideAuth();
+  await loadPrefs();
+  await loadHistory();
+  renderHistory();
+  alert("欢迎回来，" + username + "！♪(^∇^*)");
 }
 
 async function doLogout() {
