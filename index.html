@@ -199,10 +199,8 @@
 const SUPABASE_URL = "https://cyyasfnszzcctyejguzl.supabase.co";
 const SUPABASE_KEY = "sb_publishable_tbI1CaX_jOpsiR4RttNVrw_X5ypb3Sr";
 
-// AI 配置
-const AI_BASE_URL = "https://www.dmxapi.cn/v1";
-const AI_API_KEY = "sk-BspqGURVVUHPdIsp0ytoSLfKOgqWlVSkIdok8i8tHIoMLuAR";
-const AI_MODEL = "kimi-k2.5-free";
+// AI 配置（走 Cloudflare Worker，key 安全藏在后端）
+const AI_WORKER_URL = "https://nana-tabe-ai.bmarc8566.workers.dev";
 
 // ============ 食物库 ============
 const FOOD_DB = {
@@ -713,8 +711,8 @@ function clearNile() {
 async function aiAnalyze() {
   const input = document.getElementById("ai-input").value.trim();
   if (!input) return;
-  if (!AI_API_KEY) {
-    document.getElementById("ai-status").textContent = "在线版暂不支持 AI 功能，Fork 后填上自己的 key 就能用啦～";
+  if (!AI_WORKER_URL) {
+    document.getElementById("ai-status").textContent = "AI 功能暂不可用 (´・ω・`)";
     return;
   }
 
@@ -738,22 +736,14 @@ async function aiAnalyze() {
 用户输入：${input}`;
 
   try {
-    const res = await fetch(`${AI_BASE_URL}/chat/completions`, {
+    const res = await fetch(AI_WORKER_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${AI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: AI_MODEL,
-        messages: [{ role: "user", content: prompt }],
-        temperature: 0,
-        max_tokens: 300
-      })
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ prompt })
     });
 
     const data = await res.json();
-    const text = data?.choices?.[0]?.message?.content || "";
+    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error("AI 返回格式异常");
 
