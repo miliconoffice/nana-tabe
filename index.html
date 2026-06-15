@@ -715,7 +715,7 @@ async function aiAnalyze() {
   const input = document.getElementById("ai-input").value.trim();
   if (!input) return;
   if (!AI_API_KEY) {
-    document.getElementById("ai-status").textContent = "请先配置 AI_API_KEY";
+    document.getElementById("ai-status").textContent = "在线版暂不支持 AI 功能，Fork 后填上自己的 key 就能用啦～";
     return;
   }
 
