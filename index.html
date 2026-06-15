@@ -29,6 +29,7 @@
     .tag-remove:hover { opacity: 1; }
     .tag-selectable { cursor: pointer; padding: 3px 10px; border-radius: 12px; font-size: 12px; background: var(--tag-bg); color: var(--text-dim); border: 2px solid transparent; transition: all 0.2s; user-select: none; }
     .tag-selectable.selected { border-color: var(--accent); background: #fff8f0; color: var(--accent); font-weight: 600; }
+    .tag-selectable.jikou-selected { border-color: #d97373; background: #fff0f0; color: #d97373; }
     
     .food-card { background: var(--card); border-radius: var(--radius); padding: 48px 32px; text-align: center; box-shadow: var(--shadow); width: 100%; transition: transform 0.3s, opacity 0.3s; }
     .food-card.rolling { transform: scale(0.95); opacity: 0.5; }
@@ -137,24 +138,9 @@
     <button class="modal-close" onclick="hideSettings()">✕</button>
     <h2 style="text-align:center;margin-bottom:20px;">⚙️ 偏好设置</h2>
 
-    <!-- AI 助手 -->
-    <div id="ai-section" style="margin-bottom:20px;padding:14px;background:var(--tag-bg);border-radius:12px;">
-      <p style="font-size:13px;font-weight:600;margin-bottom:6px;">🤖 AI 帮我一键设置偏好</p>
-      <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">用自然语言描述，比如：不吃海鲜和辣的、偏爱日式清淡</p>
-      <textarea id="ai-input" placeholder="我不吃海鲜、对韭菜过敏、最近偏爱粤菜和清淡的…" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;resize:vertical;min-height:56px;font-family:inherit;"></textarea>
-      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
-        <button onclick="aiAnalyze()" id="ai-btn" style="padding:8px 18px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;cursor:pointer;font-size:14px;">✨ AI 帮我</button>
-        <span id="ai-status" style="font-size:12px;color:var(--text-dim);"></span>
-      </div>
-    </div>
-
     <h4>🚫 我的忌口</h4>
-    <p style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">绝对不会出现在结果里</p>
-    <div id="jikou-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
-    <div style="display:flex;gap:8px;margin-bottom:20px;">
-      <input id="jikou-input" placeholder="添加忌口，如「香菜」" onkeydown="if(event.key==='Enter')addJikou()" style="flex:1;padding:8px 12px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;">
-      <button onclick="addJikou()" style="padding:8px 16px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;cursor:pointer;font-size:14px;">添加</button>
-    </div>
+    <p style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">选中后，含这个tag的食物不会出现</p>
+    <div id="jikou-tags" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;"></div>
 
     <h4>⭐ 偏好口味</h4>
     <p style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">点击标签选中，选中后更容易出现</p>
@@ -198,9 +184,6 @@
 // Supabase 配置（publishable key，可以公开）
 const SUPABASE_URL = "https://cyyasfnszzcctyejguzl.supabase.co";
 const SUPABASE_KEY = "sb_publishable_tbI1CaX_jOpsiR4RttNVrw_X5ypb3Sr";
-
-// AI 配置（走 Cloudflare Worker，key 安全藏在后端）
-const AI_WORKER_URL = "https://nana-tabe-ai.bmarc8566.workers.dev";
 
 // ============ 食物库 ============
 const FOOD_DB = {
@@ -441,7 +424,7 @@ async function savePrefs() {
       headers: { ...getHeaders(), "Prefer": "resolution=merge-duplicates" },
       body: JSON.stringify({
         user_id: user.id,
-        忌口: LS.get("忌口", []),
+        忌口: Object.keys(LS.get("prefs", {}).忌口_tags || {}).filter(k => LS.get("prefs", {}).忌口_tags[k]),
         偏好_tags: LS.get("偏好_tags", {}),
         腻了: LS.get("腻了", []),
         updated_at: new Date().toISOString()
@@ -507,14 +490,15 @@ function pickFood() {
   const rules = FOOD_DB.时段规则[period]||{排除:[],偏向:[]};
   document.getElementById("period-badge").textContent = period;
 
-  const jikou = new Set([...prefs.忌口, ...FOOD_DB.忌口]);
+  const jikouTags = prefs.忌口_tags || {};
   const nile = new Set(prefs.腻了);
   let candidates = FOOD_DB.基础库.filter(f => {
     if (nile.has(f.name)) return false;
-    // 忌口：匹配食物名或 tag 中包含忌口词
-    const allText = f.name + " " + f.tags.join(" ");
-    for (const j of jikou) {
-      if (allText.includes(j)) return false;
+    // 忌口 tag：食物的 tag 里有被勾选为忌口的就排除
+    if (f.tags.some(t => jikouTags[t])) return false;
+    // 内置忌口词匹配
+    for (const j of FOOD_DB.忌口) {
+      if (f.name.includes(j) || f.tags.includes(j)) return false;
     }
     if (f.tags.some(t => rules.排除.includes(t))) return false;
     return true;
@@ -523,9 +507,9 @@ function pickFood() {
     prefs.腻了 = [];
     LS.set("腻了", []);
     candidates = FOOD_DB.基础库.filter(f => {
-      const allText = f.name + " " + f.tags.join(" ");
-      for (const j of jikou) {
-        if (allText.includes(j)) return false;
+      if (f.tags.some(t => jikouTags[t])) return false;
+      for (const j of FOOD_DB.忌口) {
+        if (f.name.includes(j) || f.tags.includes(j)) return false;
       }
       return !f.tags.some(t => rules.排除.includes(t));
     });
@@ -622,10 +606,18 @@ function spawnKaomoji() {
 
 // ============ 偏好设置 ============
 const ALL_TAGS = [...new Set(FOOD_DB.基础库.flatMap(f => f.tags))].sort();
-let prefs = { 忌口: [], 偏好_tags: {}, 腻了: [] };
+let prefs = { 忌口_tags: {}, 偏好_tags: {}, 腻了: [] };
 
 function loadLocalPrefs() {
-  prefs = LS.get("prefs", { 忌口: [], 偏好_tags: {}, 腻了: [] });
+  prefs = LS.get("prefs", { 忌口_tags: {}, 偏好_tags: {}, 腻了: [] });
+  // 兼容旧数据：如果还有旧版 忌口 数组，迁移到 忌口_tags
+  if (Array.isArray(prefs.忌口)) {
+    for (const j of prefs.忌口) {
+      prefs.忌口_tags[j] = true;
+    }
+    delete prefs.忌口;
+    LS.set("prefs", prefs);
+  }
 }
 
 function saveLocalPrefs() {
@@ -636,36 +628,13 @@ function saveLocalPrefs() {
 function showSettings() {
   document.getElementById("settings-modal").classList.remove("hidden");
   loadLocalPrefs();
-  renderJikou();
+  renderJikouTags();
   renderPrefTags();
   renderNile();
 }
 
 function hideSettings() {
   document.getElementById("settings-modal").classList.add("hidden");
-}
-
-function renderJikou() {
-  const el = document.getElementById("jikou-list");
-  el.innerHTML = prefs.忌口.map(x =>
-    `<span class="tag">${x}<span class="tag-remove" onclick="removeJikou('${x}')">×</span></span>`
-  ).join("");
-}
-
-function addJikou() {
-  const inp = document.getElementById("jikou-input");
-  const val = inp.value.trim();
-  if (!val || prefs.忌口.includes(val)) { inp.value = ""; return; }
-  prefs.忌口.push(val);
-  saveLocalPrefs();
-  renderJikou();
-  inp.value = "";
-}
-
-function removeJikou(item) {
-  prefs.忌口 = prefs.忌口.filter(x => x !== item);
-  saveLocalPrefs();
-  renderJikou();
 }
 
 function renderPrefTags() {
@@ -707,68 +676,27 @@ function clearNile() {
   renderNile();
 }
 
-// ============ AI 偏好分析 ============
-async function aiAnalyze() {
-  const input = document.getElementById("ai-input").value.trim();
-  if (!input) return;
-  if (!AI_WORKER_URL) {
-    document.getElementById("ai-status").textContent = "AI 功能暂不可用 (´・ω・`)";
-    return;
-  }
-
-  const btn = document.getElementById("ai-btn");
-  const status = document.getElementById("ai-status");
-  btn.disabled = true;
-  status.textContent = "分析中…";
-
-  const prompt = `你是一个食物偏好分析助手。根据用户输入，输出 JSON（仅 JSON，不要其他文字）：
-
-{"忌口":["具体食物名"],"排除tag":["标签名"],"偏好tag":["标签名"],"解释":"一句简短解释"}
-
-可用标签：${ALL_TAGS.join("、")}
-
-规则：
-- 忌口=用户明确不吃的具体食物（如"海鲜"→忌口"海鲜"；"韭菜"→忌口"韭菜"）
-- 排除tag=用户不想要的食物类型（如"不吃辣的"→排除tag包含"重口"；"不吃生的"→排除tag包含"生食"）
-- 偏好tag=用户偏好的类型（如"想吃粤菜"→偏好tag包含"广式"；"清淡"→偏好tag包含"清淡"）
-- 解释=一句简短的人话总结
-
-用户输入：${input}`;
-
-  try {
-    const res = await fetch(AI_WORKER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt })
-    });
-
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("AI 返回格式异常");
-
-    const result = JSON.parse(jsonMatch[0]);
-    loadLocalPrefs();
-
-    // 合并忌口
-    for (const j of (result.忌口 || [])) {
-      if (!prefs.忌口.includes(j)) prefs.忌口.push(j);
-    }
-    // 合并偏好tag
-    for (const t of (result.偏好tag || [])) {
-      prefs.偏好_tags[t] = 2;
-    }
-    // 合并排除tag（转成偏好tag的负向——但当前系统没有排除tag概念，改用忌口方式）
-    saveLocalPrefs();
-    renderJikou();
-    renderPrefTags();
-    renderNile();
-    status.textContent = result.解释 || "已更新！";
-  } catch (e) {
-    status.textContent = "分析失败: " + e.message;
-  }
-  btn.disabled = false;
+function renderJikouTags() {
+  const el = document.getElementById("jikou-tags");
+  prefs.忌口_tags = prefs.忌口_tags || {};
+  el.innerHTML = ALL_TAGS.map(t => {
+    const active = prefs.忌口_tags[t];
+    return `<span class="tag-selectable${active ? " selected jikou-selected" : ""}" onclick="toggleJikouTag('${t}')">🚫 ${t}</span>`;
+  }).join("");
 }
+
+function toggleJikouTag(tag) {
+  if (prefs.忌口_tags[tag]) {
+    delete prefs.忌口_tags[tag];
+  } else {
+    prefs.忌口_tags[tag] = true;
+  }
+  saveLocalPrefs();
+  renderJikouTags();
+}
+
+// 保持兼容：renderJikou 别名
+function renderJikou() { renderJikouTags(); }
 </script>
 </body>
 </html>
