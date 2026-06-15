@@ -185,8 +185,12 @@
 
 <script src="config.js"></script>
 <script>
-// Supabase 配置（已在 config.js）
-// AI 配置（已在 config.js）
+// 兜底：config.js 没加载时也能正常选餐（AI 功能需要配置后才能用）
+var SUPABASE_URL = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "";
+var SUPABASE_KEY = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : "";
+var AI_BASE_URL = typeof AI_BASE_URL !== 'undefined' ? AI_BASE_URL : "";
+var AI_API_KEY = typeof AI_API_KEY !== 'undefined' ? AI_API_KEY : "";
+var AI_MODEL = typeof AI_MODEL !== 'undefined' ? AI_MODEL : "";
 
 // ============ 食物库 ============
 const FOOD_DB = {
