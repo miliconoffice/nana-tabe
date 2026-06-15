@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>七号今天吃什么</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg: #faf8f5; --card: #ffffff; --text: #3d3a38; --text-dim: #8c8a87;
+      --accent: #f0a060; --accent-hover: #e08840; --border: #e8e4df;
+      --tag-bg: #f5f0eb; --radius: 16px; --shadow: 0 2px 16px rgba(0,0,0,0.06);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg); color: var(--text); min-height: 100vh;
+      display: flex; justify-content: center; align-items: center; line-height: 1.6;
+    }
+    #app { width: 100%; max-width: 480px; display: flex; flex-direction: column; align-items: center; padding: 24px; position: relative; z-index: 1; }
+    
+    header { display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 16px; }
+    .period-badge { background: var(--accent); color: white; padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; }
+    .btn-login, .btn-logout { padding: 6px 16px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; border: 2px solid var(--accent); background: transparent; color: var(--accent); }
+    .btn-login:hover, .btn-logout:hover { background: var(--accent); color: white; }
+    .btn-icon { border: none; background: transparent; font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: all 0.2s; }
+    .btn-icon:hover { background: var(--tag-bg); }
+
+    .tag-remove { cursor: pointer; margin-left: 2px; opacity: 0.5; }
+    .tag-remove:hover { opacity: 1; }
+    .tag-selectable { cursor: pointer; padding: 3px 10px; border-radius: 12px; font-size: 12px; background: var(--tag-bg); color: var(--text-dim); border: 2px solid transparent; transition: all 0.2s; user-select: none; }
+    .tag-selectable.selected { border-color: var(--accent); background: #fff8f0; color: var(--accent); font-weight: 600; }
+    
+    .food-card { background: var(--card); border-radius: var(--radius); padding: 48px 32px; text-align: center; box-shadow: var(--shadow); width: 100%; transition: transform 0.3s, opacity 0.3s; }
+    .food-card.rolling { transform: scale(0.95); opacity: 0.5; }
+    .food-emoji { font-size: 72px; margin-bottom: 16px; }
+    .food-name { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .food-comment { font-size: 14px; color: var(--text-dim); margin-bottom: 12px; font-style: italic; line-height: 1.5; }
+    .food-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    .tag { background: var(--tag-bg); padding: 3px 10px; border-radius: 12px; font-size: 12px; color: var(--text-dim); }
+    
+    .btn-start { margin-top: 24px; padding: 14px 48px; border: none; border-radius: 14px; background: var(--accent); color: white; font-size: 20px; font-weight: 700; cursor: pointer; transition: all 0.2s; }
+    .btn-start:hover { background: var(--accent-hover); transform: translateY(-2px); }
+    
+    .actions { display: flex; gap: 10px; margin-top: 24px; width: 100%; }
+    .btn-action { flex: 1; padding: 14px 8px; border: none; border-radius: 12px; font-size: 15px; cursor: pointer; font-weight: 600; transition: all 0.2s; }
+    .btn-refresh { background: var(--tag-bg); color: var(--text); }
+    .btn-refresh:hover { background: var(--border); }
+    .btn-nile { background: #fff0f0; color: #d97373; }
+    .btn-nile:hover { background: #ffe0e0; }
+    .btn-keep { background: var(--accent); color: white; }
+    .btn-keep:hover { background: var(--accent-hover); }
+    
+    .history-section { width: 100%; margin-top: 32px; }
+    .history-section h3 { font-size: 16px; margin-bottom: 12px; color: var(--text-dim); }
+    .history-list { display: flex; flex-wrap: wrap; gap: 8px; }
+    .history-item { background: var(--card); padding: 6px 14px; border-radius: 20px; font-size: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+    .empty-hint { color: var(--text-dim); font-size: 14px; }
+    
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 200; }
+    .modal-card { background: var(--card); border-radius: var(--radius); padding: 40px 32px; text-align: center; box-shadow: var(--shadow); max-width: 380px; width: 90%; position: relative; }
+    .modal-close { position: absolute; top: 12px; right: 12px; border: none; background: none; font-size: 20px; cursor: pointer; }
+    .modal h2 { font-size: 20px; margin-bottom: 8px; }
+    .modal .desc { color: var(--text-dim); font-size: 14px; margin-bottom: 24px; }
+    .btn-auth { display: block; width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 16px; cursor: pointer; font-weight: 600; margin-bottom: 12px; background: var(--accent); color: white; transition: all 0.2s; }
+    .btn-auth:hover { background: var(--accent-hover); }
+    .btn-auth.outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+    .btn-auth.outline:hover { background: var(--tag-bg); }
+    .email-form { margin-top: 16px; }
+    .email-form input { width: 100%; padding: 12px 16px; border: 2px solid var(--border); border-radius: 12px; font-size: 15px; margin-bottom: 12px; outline: none; }
+    .email-form input:focus { border-color: var(--accent); }
+    .hint { font-size: 12px; color: var(--text-dim); }
+    
+    .hidden { display: none !important; }
+    footer { text-align: center; padding: 16px; font-size: 12px; color: var(--text-dim); width: 100%; }
+
+    /* 流动颜文字 */
+    #floating-kaomoji {
+      position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;
+    }
+    #floating-kaomoji span {
+      position: absolute; bottom: -60px;
+      font-size: 18px; opacity: 0.15;
+      animation: floatUp linear infinite;
+      white-space: nowrap;
+      user-select: none;
+    }
+    @keyframes floatUp {
+      0%   { transform: translateY(0) rotate(0deg); opacity: 0; }
+      10%  { opacity: 0.18; }
+      90%  { opacity: 0.12; }
+      100% { transform: translateY(-110vh) rotate(30deg); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+<div id="floating-kaomoji"></div>
+<div id="app">
+  <header>
+    <span class="period-badge" id="period-badge">🍽️</span>
+    <div>
+      <button class="btn-icon" onclick="showSettings()" title="偏好设置">⚙️</button>
+      <button class="btn-login" id="btn-login" onclick="showAuth()">登录</button>
+      <button class="btn-logout hidden" id="btn-logout" onclick="doLogout()">退出</button>
+    </div>
+  </header>
+
+  <div id="entry" class="food-card">
+    <div class="food-emoji">🍽️</div>
+    <div class="food-name">七号今天吃什么</div>
+    <button class="btn-start" onclick="startPick()">是啊，吃什么</button>
+  </div>
+
+  <div id="result" class="hidden">
+    <div id="food-card" class="food-card">
+      <div class="food-emoji" id="food-emoji">🤔</div>
+      <div class="food-name" id="food-name"></div>
+      <div class="food-tags" id="food-tags"></div>
+    </div>
+    <div class="actions">
+      <button class="btn-action btn-refresh" onclick="pickFood()">🔄 换一个</button>
+      <button class="btn-action btn-nile" onclick="markNile()">😮‍💨 腻了</button>
+      <button class="btn-action btn-keep" onclick="markKeep()">✅ 就这样了</button>
+    </div>
+  </div>
+
+  <div class="history-section">
+    <h3>📋 最近吃的</h3>
+    <div id="history-list" class="history-list"><p class="empty-hint">还没有记录哦～</p></div>
+  </div>
+
+  <footer>由 <strong>七号</strong> 投喂 · 登录后让七号更了解人类的偏好哦♪(^∇^*)</footer>
+</div>
+
+<!-- 设置面板 -->
+<div id="settings-modal" class="modal hidden" onclick="if(event.target===this)hideSettings()">
+  <div class="modal-card" style="max-width:420px;text-align:left;">
+    <button class="modal-close" onclick="hideSettings()">✕</button>
+    <h2 style="text-align:center;margin-bottom:20px;">⚙️ 偏好设置</h2>
+
+    <!-- AI 助手 -->
+    <div id="ai-section" style="margin-bottom:20px;padding:14px;background:var(--tag-bg);border-radius:12px;">
+      <p style="font-size:13px;font-weight:600;margin-bottom:6px;">🤖 AI 帮我一键设置偏好</p>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">用自然语言描述，比如：不吃海鲜和辣的、偏爱日式清淡</p>
+      <textarea id="ai-input" placeholder="我不吃海鲜、对韭菜过敏、最近偏爱粤菜和清淡的…" style="width:100%;padding:10px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;resize:vertical;min-height:56px;font-family:inherit;"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
+        <button onclick="aiAnalyze()" id="ai-btn" style="padding:8px 18px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;cursor:pointer;font-size:14px;">✨ AI 帮我</button>
+        <span id="ai-status" style="font-size:12px;color:var(--text-dim);"></span>
+      </div>
+    </div>
+
+    <h4>🚫 我的忌口</h4>
+    <p style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">绝对不会出现在结果里</p>
+    <div id="jikou-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;"></div>
+    <div style="display:flex;gap:8px;margin-bottom:20px;">
+      <input id="jikou-input" placeholder="添加忌口，如「香菜」" onkeydown="if(event.key==='Enter')addJikou()" style="flex:1;padding:8px 12px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;">
+      <button onclick="addJikou()" style="padding:8px 16px;border:none;border-radius:10px;background:var(--accent);color:white;font-weight:600;cursor:pointer;font-size:14px;">添加</button>
+    </div>
+
+    <h4>⭐ 偏好口味</h4>
+    <p style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">点击标签选中，选中后更容易出现</p>
+    <div id="pref-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:20px;"></div>
+
+    <h4>😮‍💨 吃腻了</h4>
+    <div id="nile-list" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px;"></div>
+    <button onclick="clearNile()" style="padding:6px 14px;border:2px solid var(--border);border-radius:10px;background:transparent;cursor:pointer;font-size:13px;color:var(--text-dim);">清空腻了列表</button>
+  </div>
+</div>
+
+<!-- 登录弹窗 -->
+<div id="auth-modal" class="modal hidden" onclick="if(event.target===this)hideAuth()">
+  <div class="modal-card">
+    <button class="modal-close" onclick="hideAuth()">✕</button>
+    <div style="font-size:48px;margin-bottom:12px">🍽️</div>
+    <h2>登录后同步偏好</h2>
+    <p class="desc">忌口、偏好、腻了记录会在所有设备间同步</p>
+    <button class="btn-auth" onclick="loginGitHub()">使用 GitHub 登录</button>
+    <button class="btn-auth outline" onclick="document.getElementById('email-form').classList.toggle('hidden')">邮箱登录</button>
+    <div id="email-form" class="email-form hidden">
+      <input type="email" id="email-input" placeholder="your@email.com">
+      <button class="btn-auth" onclick="loginEmail()">发送魔法链接</button>
+      <p class="hint">我们会发送一个无密码登录链接到你的邮箱</p>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+// Supabase 配置（已在 config.js）
+// AI 配置（已在 config.js）
+
+// ============ 食物库 ============
+const FOOD_DB = {
+  忌口: ["大阪烧", "甜咸海鲜", "腥味海鱼"],
+  时段规则: {
+    "早餐":{排除:["冰凉","重口","生食","甜"],偏向:["温暖","清淡","主食","饱腹"]},
+    "午餐":{排除:["甜"],偏向:["主食","饱腹","丰盛"]},
+    "下午茶":{排除:["丰盛","主食","饱腹"],偏向:["甜","轻食","冰凉","零食"]},
+    "晚餐":{排除:[],偏向:["主食","丰盛","温暖"]},
+    "夜宵":{排除:["丰盛","油炸","重口"],偏向:["轻食","甜","温暖","零食"]}
+  },
+  基础库: [
+    {name:"三文鱼刺身",emoji:"🍣",tags:["日式","生食","冰凉","轻食"],comment:"月场所的最爱！橘色的纹路像小小的夕阳 (´▽｀)"},
+    {name:"牛油果沙拉",emoji:"🥗",tags:["轻食","清淡","冰凉","健康"],comment:"绵密的口感像在吃绿色的云朵～♪(^∇^*)"},
+    {name:"拉面",emoji:"🍜",tags:["日式","主食","温暖","饱腹","汤类"],comment:"呼噜呼噜～热汤面是世界上最幸福的声音 ヾ(≧▽≦*)o"},
+    {name:"咖喱饭",emoji:"🍛",tags:["日式","主食","温暖","饱腹","重口"],comment:"浓稠的咖喱裹着米饭，一口下去整个人都暖了 (*/ω＼*)"},
+    {name:"亲子丼",emoji:"🍚",tags:["日式","主食","温暖","饱腹"],comment:"鸡蛋和鸡肉在一起，七号觉得它们相处得很温柔 (◍•ᴗ•◍)"},
+    {name:"三文鱼刺身",emoji:"🍣",tags:["日式","海鲜","生食","冰凉","轻食"],comment:"月场所的最爱！橘色的纹路像小小的夕阳 (´▽｀)"},
+    {name:"寿司拼盘",emoji:"🍣",tags:["日式","海鲜","生食","冰凉","轻食","丰盛"],comment:"一排排小寿司像排着队等你挑，每个都不一样 (๑•̀ㅂ•́)و✧"},
+    {name:"鳗鱼饭",emoji:"🍱",tags:["日式","海鲜","主食","温暖","饱腹","丰盛"],comment:"酱汁渗进米饭的缝隙里，每一粒都在发光 ╰(*°▽°*)╯"},
+    {name:"天妇罗",emoji:"🍤",tags:["日式","海鲜","油炸","丰盛"],comment:"咔嚓一声咬下去，酥脆的外衣里藏着惊喜 ✧(≖ ◡ ≖✿)"},
+    {name:"荞麦面",emoji:"🍜",tags:["日式","主食","清淡","冰凉"],comment:"哧溜一下滑进喉咙，夏天就该这样过 d(´▽｀)b"},
+    {name:"味噌汤",emoji:"🍵",tags:["日式","汤类","温暖","清淡","轻食"],comment:"捧着碗暖手，喝下去暖心～ (◕‿◕✿)"},
+    {name:"炸猪排",emoji:"🐷",tags:["日式","油炸","丰盛","主食"],comment:"金黄酥脆的外壳下面是多汁的肉，幸福就是这么简单 (｡･ω･｡)"},
+    {name:"关东煮",emoji:"🍢",tags:["日式","汤类","温暖","轻食","清淡"],comment:"咕嘟咕嘟的汤里泡着各种小东西，像在泡温泉 (～￣▽￣)～"},
+    {name:"意大利面",emoji:"🍝",tags:["西式","主食","饱腹","温暖"],comment:"叉子转啊转，把面条和酱汁卷成一团小幸福 (´• ω •`)"},
+    {name:"披萨",emoji:"🍕",tags:["西式","主食","饱腹","丰盛","油炸"],comment:"拉丝的那一瞬间，所有烦恼都跟着芝士一起断掉了 (≧∇≦)ﾉ"},
+    {name:"牛排",emoji:"🥩",tags:["西式","丰盛","饱腹","主食","温暖"],comment:"切开看到粉红色的切面，七号就觉得今天值得庆祝 ヾ(≧▽≦*)o"},
+    {name:"汉堡",emoji:"🍔",tags:["西式","饱腹","油炸","丰盛"],comment:"两只手才能握住，张开嘴咬下去的时候什么也不用想 (ง •_•)ง"},
+    {name:"三明治",emoji:"🥪",tags:["轻食","清淡","冰凉","主食"],comment:"整整齐齐的一层层叠在一起，像食物做的小房子 (●'◡'●)"},
+    {name:"蔬菜汤",emoji:"🥣",tags:["轻食","清淡","温暖","汤类","健康"],comment:"把大地里的好东西都煮进一个碗里了 (◕‿◕✿)"},
+    {name:"水果酸奶",emoji:"🍓",tags:["轻食","冰凉","健康","甜","零食"],comment:"酸酸甜甜冰冰凉凉，下午的阳光就该配这个 ✿(◍•ᴗ•◍)"},
+    {name:"炒时蔬",emoji:"🥬",tags:["中式","温暖","清淡","健康","轻食"],comment:"火候刚好的脆嫩感，咬下去能听见蔬菜在说话 (๑•̀ㅂ•́)و✧"},
+    {name:"番茄炒蛋",emoji:"🍳",tags:["中式","温暖","清淡","饱腹","主食"],comment:"最家常的味道，像被谁轻轻拍了拍头 (´▽｀)"},
+    {name:"麻婆豆腐",emoji:"🌶️",tags:["中式","重口","温暖","饱腹","主食"],comment:"花椒在舌尖跳舞，辣得吸气却停不下筷子 ( ᗒᗨᗕ )"},
+    {name:"白米饭+烤鱼",emoji:"🐟",tags:["日式","海鲜","主食","温暖","饱腹"],comment:"简单到不能再简单，但米饭配烤鱼就是日子的味道 =￣ω￣="},
+    {name:"文字烧",emoji:"🫓",tags:["日式","温暖","主食","丰盛"],comment:"月场所心心念念的文字烧！在铁板上用小铲子一点点刮着吃最有趣 (´▽｀)"},
+    {name:"蛋包饭",emoji:"🍳",tags:["日式","主食","温暖","饱腹","轻食"],comment:"用勺子划开蛋皮的那瞬间，像拆开一份小礼物 (๑•̀ㅂ•́)و✧"},
+    {name:"茶泡饭",emoji:"🍵",tags:["日式","清淡","温暖","轻食","汤类"],comment:"茶汤浇在白饭上，清清爽爽的，适合没什么胃口的夜晚 (´• ω •`)"},
+    {name:"纳豆",emoji:"🫘",tags:["日式","清淡","冰凉","轻食","健康"],comment:"搅啊搅啊搅出丝来，喜欢的人爱得不得了，不喜欢的人……嗯，试试看？ (灬ºωº灬)"},
+    {name:"牛肉饭",emoji:"🐂",tags:["日式","主食","温暖","饱腹"],comment:"肥牛片裹着甜咸的酱汁铺在饭上，一碗就很满足 d(´▽｀)b"},
+    {name:"饭团",emoji:"🍙",tags:["日式","主食","清淡","冰凉","轻食"],comment:"三角型的白米饭握在手心里，海苔的咸味刚刚好 (｀・ω・´)"},
+    {name:"炸鸡",emoji:"🍗",tags:["日式","油炸","丰盛","饱腹"],comment:"外酥里嫩还带着汁水，咬下去的那声咔嚓就是快乐 (≧∇≦)ﾉ"},
+    {name:"章鱼烧",emoji:"🐙",tags:["日式","海鲜","油炸","温暖","零食"],comment:"圆滚滚的小球在铁板上转啊转，柴鱼片在上面跳舞 o(*≧▽≦)ツ"},
+    {name:"铜锣烧",emoji:"🥞",tags:["甜","零食","轻食"],comment:"两片松软的饼夹着红豆沙，哆啦A梦最懂生活 (◍•ᴗ•◍)"},
+    {name:"抹茶冰淇淋",emoji:"🍦",tags:["甜","冰凉","零食","日式"],comment:"微苦的抹茶和冰凉的口感，像夏天的风从舌尖经过 (´▽｀)"},
+    {name:"草莓大福",emoji:"🍓",tags:["甜","零食","冰凉","轻食","日式"],comment:"糯糯的外皮裹着一整颗草莓，咬下去酸和甜一起涌上来 (●'◡'●)"},
+    {name:"芝士蛋糕",emoji:"🧀",tags:["甜","零食","轻食","西式"],comment:"绵密到像在吃空气，但空气哪有这么浓郁的奶香 (*/ω＼*)"},
+    {name:"巧克力",emoji:"🍫",tags:["甜","零食","冰凉","轻食"],comment:"在嘴里慢慢融化，舌尖能感觉到它在一点一点消失 (´• ω •`)"},
+    {name:"热可可",emoji:"☕",tags:["甜","温暖","轻食","零食"],comment:"双手捧着杯子，暖意从指尖传到心里，比热水袋还好用 (◕‿◕✿)"},
+    {name:"乌龙茶",emoji:"🫖",tags:["清淡","温暖","日式"],comment:"第一口觉得涩，咽下去之后却有回甘——像很多事情的道理 (｀・ω・´)"},
+    {name:"抹茶拿铁",emoji:"🍵",tags:["甜","温暖","日式","轻食"],comment:"抹茶的苦被牛奶包裹着，像被温柔地拥抱了一下 (*/ω＼*)"},
+    {name:"火锅",emoji:"🫕",tags:["中式","温暖","丰盛","汤类","重口"],comment:"咕噜咕噜的红汤翻滚着，一群人围着比什么都暖 ヾ(≧▽≦*)o"},
+    {name:"凉茶",emoji:"🧪",tags:["中式","冰凉","清淡","健康"],comment:"一口下去苦得皱眉，但身体知道这是好东西 (｀・ω・´)"},
+    {name:"肠粉",emoji:"🫔",tags:["中式","广式","清淡","温暖","主食","轻食"],comment:"薄薄的米皮裹着馅料，淋上酱油滑进嘴里 (●'◡'●)"},
+    {name:"艇仔粥",emoji:"🥣",tags:["中式","广式","粥类","温暖","清淡","轻食"],comment:"粥底绵密，鱼片鲜甜，像一碗热乎乎的珠江 (◕‿◕✿)"},
+    {name:"皮蛋瘦肉粥",emoji:"🥚",tags:["中式","广式","粥类","温暖","饱腹"],comment:"皮蛋的醇厚混着瘦肉丝的咸香，生病时最想喝这个 (´• ω •`)"},
+    {name:"韭菜盒子",emoji:"🥟",tags:["中式","温暖","主食","饱腹","油炸"],comment:"外皮煎得金黄酥脆，咬开韭菜的香气直接冲出来 (๑•̀ㅂ•́)و✧"},
+    {name:"油条",emoji:"🥖",tags:["中式","油炸","温暖","主食","早餐"],comment:"刚出锅的金黄酥脆，蘸豆浆吃是世界上最简单的幸福 (´▽｀)"},
+    {name:"豆浆",emoji:"🥛",tags:["中式","温暖","清淡","健康","早餐"],comment:"热乎乎的一碗，豆香从舌尖暖到胃里 (◕‿◕✿)"},
+    {name:"包子",emoji:"🥟",tags:["中式","温暖","饱腹","主食","早餐"],comment:"白胖胖的包子掰开，热气往外冒，馅料藏在里面等你 (*/ω＼*)"},
+    {name:"煎饼果子",emoji:"🫓",tags:["中式","温暖","饱腹","主食","早餐"],comment:"摊开的面糊上打一颗蛋，撒上葱花，卷起来就是整个早晨 d(´▽｀)b"},
+    {name:"珍珠奶茶",emoji:"🧋",tags:["甜","冰凉","零食","下午茶"],comment:"吸管戳下去的瞬间，珍珠和奶茶一起涌上来 ヾ(≧▽≦*)o"},
+    {name:"柠檬茶",emoji:"🍋",tags:["冰凉","酸甜","轻食","下午茶"],comment:"酸得眯起眼睛，然后冰冰凉凉地滑过喉咙，爽 (≧∇≦)ﾉ"},
+    {name:"气泡水",emoji:"🫧",tags:["冰凉","轻食","零食","下午茶"],comment:"气泡在舌尖上啪嗒啪嗒炸开，像喝了一口星星 ✧(≖ ◡ ≖✿)"},
+    {name:"豆奶",emoji:"🧃",tags:["中式","温暖","清淡","健康","早餐"],comment:"比牛奶多了豆子的香气，小时候早餐的味道 (◍•ᴗ•◍)"},
+    {name:"石锅拌饭",emoji:"🍲",tags:["韩式","温暖","饱腹","主食","丰盛"],comment:"勺子戳破蛋黄拌进饭里，石锅底部的锅巴是隐藏彩蛋 (๑•̀ㅂ•́)و✧"},
+    {name:"泡菜锅",emoji:"🥘",tags:["韩式","温暖","汤类","重口","丰盛"],comment:"红通通的汤咕噜咕噜冒着泡，酸辣的味道让人停不下来 ( ᗒᗨᗕ )"},
+    {name:"韩式炸酱面",emoji:"🍜",tags:["韩式","主食","温暖","饱腹"],comment:"黑亮亮的酱汁裹满面条，韩剧里的经典场面就是端着这碗 (●'◡'●)"},
+    {name:"布丁",emoji:"🍮",tags:["甜","冰凉","轻食","零食","下午茶"],comment:"勺子舀下去，微微晃动的表面像在说「吃我呀」 (´▽｀)"},
+    {name:"薯条",emoji:"🍟",tags:["油炸","零食","丰盛"],comment:"刚炸出来的薯条蘸番茄酱，一根一根停不下来 d(´▽｀)b"},
+    {name:"爆米花",emoji:"🍿",tags:["甜","零食","轻食","下午茶"],comment:"抓一把塞进嘴里，咔嚓咔嚓的节奏像看电影的前奏 (～￣▽￣)～"},
+    {name:"西瓜",emoji:"🍉",tags:["冰凉","甜","健康","轻食","夏季"],comment:"刀切下去啪地裂开，红色的果肉带着夏天最甜的味道 (´▽｀)"},
+    {name:"蜜瓜",emoji:"🍈",tags:["冰凉","甜","健康","轻食","夏季"],comment:"冷藏过的蜜瓜切成小块，叉子戳进去的触感都让人心动 (◕‿◕✿)"}
+  ]
+};
+
+// ============ Auth ============
+let session = null;
+let user = null;
+const AUTH_URL = SUPABASE_URL + "/auth/v1";
+const REST_URL = SUPABASE_URL + "/rest/v1";
+
+function getHeaders() {
+  return {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + (session?.access_token || SUPABASE_KEY),
+    "Content-Type": "application/json",
+    "Prefer": "return=representation"
+  };
+}
+
+async function checkAuth() {
+  // 从 URL hash 提取 token（OAuth 回调）
+  const hash = window.location.hash.substring(1);
+  if (hash) {
+    const params = new URLSearchParams(hash);
+    const access_token = params.get("access_token");
+    const refresh_token = params.get("refresh_token");
+    if (access_token) {
+      session = { access_token, refresh_token };
+      localStorage.setItem("qihao_session", JSON.stringify(session));
+      window.location.hash = "";
+    }
+  }
+  // 从 localStorage 恢复
+  if (!session) {
+    const saved = localStorage.getItem("qihao_session");
+    if (saved) {
+      try { session = JSON.parse(saved); } catch(e) {}
+    }
+  }
+  // 验证 session
+  if (session?.access_token) {
+    try {
+      const res = await fetch(AUTH_URL + "/user", { headers: getHeaders() });
+      if (res.ok) {
+        user = await res.json();
+        document.getElementById("btn-login").classList.add("hidden");
+        document.getElementById("btn-logout").classList.remove("hidden");
+        await loadPrefs();
+        await loadHistory();
+        return;
+      }
+    } catch(e) {}
+  }
+  // 未登录
+  user = null;
+  session = null;
+  localStorage.removeItem("qihao_session");
+  document.getElementById("btn-login").classList.remove("hidden");
+  document.getElementById("btn-logout").classList.add("hidden");
+}
+
+function showAuth() { document.getElementById("auth-modal").classList.remove("hidden"); }
+function hideAuth() { document.getElementById("auth-modal").classList.add("hidden"); }
+
+function loginGitHub() {
+  window.location.href = AUTH_URL + "/authorize?provider=github&redirect_to=" + encodeURIComponent(window.location.origin + window.location.pathname);
+}
+
+async function loginEmail() {
+  const email = document.getElementById("email-input").value.trim();
+  if (!email) return alert("请输入邮箱");
+  const res = await fetch(AUTH_URL + "/otp", {
+    method: "POST",
+    headers: { "apikey": SUPABASE_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify({ email })
+  });
+  if (res.ok) {
+    alert("魔法链接已发送！请查收邮件 ✉️\n然后点击邮件里的链接回到这个页面。");
+    hideAuth();
+  } else {
+    alert("发送失败，请检查邮箱地址");
+  }
+}
+
+async function doLogout() {
+  try { await fetch(AUTH_URL + "/logout", { method: "POST", headers: getHeaders() }); } catch(e) {}
+  session = null;
+  user = null;
+  localStorage.removeItem("qihao_session");
+  location.reload();
+}
+
+// ============ 数据同步 ============
+async function loadPrefs() {
+  if (!user) return;
+  try {
+    const res = await fetch(REST_URL + "/preferences?user_id=eq." + user.id, { headers: getHeaders() });
+    const data = await res.json();
+    if (data.length > 0) {
+      LS.set("忌口", data[0].忌口 || []);
+      LS.set("偏好_tags", data[0].偏好_tags || {});
+      LS.set("腻了", data[0].腻了 || []);
+    }
+  } catch(e) { console.warn("loadPrefs failed", e); }
+}
+
+async function savePrefs() {
+  if (!user) return;
+  try {
+    await fetch(REST_URL + "/preferences", {
+      method: "POST",
+      headers: { ...getHeaders(), "Prefer": "resolution=merge-duplicates" },
+      body: JSON.stringify({
+        user_id: user.id,
+        忌口: LS.get("忌口", []),
+        偏好_tags: LS.get("偏好_tags", {}),
+        腻了: LS.get("腻了", []),
+        updated_at: new Date().toISOString()
+      })
+    });
+  } catch(e) { console.warn("savePrefs failed", e); }
+}
+
+async function loadHistory() {
+  if (!user) return;
+  try {
+    const res = await fetch(REST_URL + "/food_history?user_id=eq." + user.id + "&order=created_at.desc&limit=10", { headers: getHeaders() });
+    const data = await res.json();
+    if (data.length > 0) {
+      LS.set("history", data.map(h => ({ name: h.food_name, action: h.action, time: new Date(h.created_at).toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"}) })));
+    }
+  } catch(e) { console.warn("loadHistory failed", e); }
+}
+
+async function addHistory(name, action) {
+  const item = { name, action, time: new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"}) };
+  let history = LS.get("history", []);
+  history.unshift(item);
+  if (history.length > 10) history.pop();
+  LS.set("history", history);
+
+  if (user) {
+    try {
+      await fetch(REST_URL + "/food_history", {
+        method: "POST",
+        headers: { ...getHeaders(), "Prefer": "return=minimal" },
+        body: JSON.stringify({ user_id: user.id, food_name: name, action, created_at: new Date().toISOString() })
+      });
+    } catch(e) { console.warn("addHistory failed", e); }
+  }
+}
+
+// ============ localStorage 工具 ============
+const LS = {
+  get(k, fallback) { try { return JSON.parse(localStorage.getItem("qihao_"+k)) || fallback; } catch { return fallback; } },
+  set(k, v) { localStorage.setItem("qihao_"+k, JSON.stringify(v)); }
+};
+
+// ============ 食物选择 ============
+let currentFood = null;
+
+function getPeriod() {
+  const h = new Date().getHours();
+  if (h>=6&&h<10) return "早餐"; if (h>=10&&h<14) return "午餐";
+  if (h>=14&&h<17) return "下午茶"; if (h>=17&&h<21) return "晚餐";
+  return "夜宵";
+}
+
+function startPick() {
+  document.getElementById("entry").classList.add("hidden");
+  document.getElementById("result").classList.remove("hidden");
+  pickFood();
+}
+
+function pickFood() {
+  loadLocalPrefs();
+  const period = getPeriod();
+  const rules = FOOD_DB.时段规则[period]||{排除:[],偏向:[]};
+  document.getElementById("period-badge").textContent = period;
+
+  const jikou = new Set([...prefs.忌口, ...FOOD_DB.忌口]);
+  const nile = new Set(prefs.腻了);
+  let candidates = FOOD_DB.基础库.filter(f => {
+    if (nile.has(f.name)) return false;
+    // 忌口：匹配食物名或 tag 中包含忌口词
+    const allText = f.name + " " + f.tags.join(" ");
+    for (const j of jikou) {
+      if (allText.includes(j)) return false;
+    }
+    if (f.tags.some(t => rules.排除.includes(t))) return false;
+    return true;
+  });
+  if (candidates.length === 0) {
+    prefs.腻了 = [];
+    LS.set("腻了", []);
+    candidates = FOOD_DB.基础库.filter(f => {
+      const allText = f.name + " " + f.tags.join(" ");
+      for (const j of jikou) {
+        if (allText.includes(j)) return false;
+      }
+      return !f.tags.some(t => rules.排除.includes(t));
+    });
+  }
+  const weights = candidates.map(f => {
+    let w = 1;
+    for (const t of f.tags) {
+      if (rules.偏向.includes(t)) w *= 1.5;
+      w *= (prefs.偏好_tags[t] || 1);
+    }
+    return w;
+  });
+  const total = weights.reduce((s,w) => s+w, 0);
+  let r = Math.random() * total, idx = 0;
+  for (; idx < candidates.length; idx++) { r -= weights[idx]; if (r <= 0) break; }
+  currentFood = candidates[Math.min(idx, candidates.length-1)];
+  renderFood();
+}
+
+function renderFood() {
+  const card = document.getElementById("food-card");
+  card.classList.add("rolling");
+  setTimeout(() => {
+    document.getElementById("food-emoji").textContent = currentFood.emoji;
+    document.getElementById("food-name").textContent = currentFood.name;
+    document.getElementById("food-tags").innerHTML = currentFood.tags.map(t => `<span class="tag">${t}</span>`).join("");
+    // 评价
+    let commentEl = document.getElementById("food-comment");
+    if (!commentEl) {
+      commentEl = document.createElement("div");
+      commentEl.id = "food-comment";
+      commentEl.className = "food-comment";
+      document.getElementById("food-card").insertBefore(commentEl, document.getElementById("food-tags"));
+    }
+    commentEl.textContent = currentFood.comment ? "OS：" + currentFood.comment : "";
+    card.classList.remove("rolling");
+  }, 200);
+}
+
+function markNile() {
+  if (!currentFood) return;
+  loadLocalPrefs();
+  prefs.腻了.push(currentFood.name);
+  if (prefs.腻了.length > 10) prefs.腻了 = prefs.腻了.slice(-10);
+  LS.set("腻了", prefs.腻了);
+  saveLocalPrefs();
+  addHistory(currentFood.name, "nile");
+  renderHistory();
+  pickFood();
+}
+
+function markKeep() {
+  if (!currentFood) return;
+  addHistory(currentFood.name, "keep");
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.getElementById("history-list");
+  const history = LS.get("history", []);
+  if (history.length === 0) { list.innerHTML = '<p class="empty-hint">还没有记录哦～</p>'; return; }
+  list.innerHTML = history.slice(0,10).map(h => {
+    const icon = h.action==="keep"?"✅":"😮‍💨";
+    return `<div class="history-item">${icon} ${h.name} <span style="color:var(--text-dim);font-size:11px">${h.time}</span></div>`;
+  }).join("");
+}
+
+// ============ 初始化 ============
+checkAuth().then(() => renderHistory());
+spawnKaomoji();
+const KAOMOJIS = [
+  "(´▽｀)", "ヾ(≧▽≦*)o", "(*/ω＼*)", "(｀・ω・´)", "(´；ω；)",
+  "♪(^∇^*)", "(◍•ᴗ•◍)", "(✿◡‿◡)", "(๑•̀ㅂ•́)و✧", "(¦3[▓▓]",
+  "( ᗒᗨᗕ )", "(≧∇≦)ﾉ", "d(´▽｀)b", "(´• ω •`)", "(灬ºωº灬)",
+  "╰(*°▽°*)╯", "(◕‿◕✿)", "(づ｡◕‿‿◕｡)づ", "(●'◡'●)", "=￣ω￣=",
+  "(｡･ω･｡)", "o(*≧▽≦)ツ", "(～￣▽￣)～", "(ง •_•)ง", "♪(´▽｀)",
+  "⋆｡°✩", "✧(≖ ◡ ≖✿)", "(・∀・)", "(*^▽^*)", "(^・ω・^ )"
+];
+
+function spawnKaomoji() {
+  const container = document.getElementById("floating-kaomoji");
+  setInterval(() => {
+    const span = document.createElement("span");
+    span.textContent = KAOMOJIS[Math.floor(Math.random() * KAOMOJIS.length)];
+    span.style.left = Math.random() * 100 + "%";
+    span.style.fontSize = (14 + Math.random() * 20) + "px";
+    span.style.animationDuration = (12 + Math.random() * 20) + "s";
+    span.style.animationDelay = "0s";
+    container.appendChild(span);
+    // 动画结束后清理
+    setTimeout(() => span.remove(), 35000);
+  }, 2000);
+}
+
+// ============ 偏好设置 ============
+const ALL_TAGS = [...new Set(FOOD_DB.基础库.flatMap(f => f.tags))].sort();
+let prefs = { 忌口: [], 偏好_tags: {}, 腻了: [] };
+
+function loadLocalPrefs() {
+  prefs = LS.get("prefs", { 忌口: [], 偏好_tags: {}, 腻了: [] });
+}
+
+function saveLocalPrefs() {
+  LS.set("prefs", prefs);
+  if (user) savePrefs();
+}
+
+function showSettings() {
+  document.getElementById("settings-modal").classList.remove("hidden");
+  loadLocalPrefs();
+  renderJikou();
+  renderPrefTags();
+  renderNile();
+}
+
+function hideSettings() {
+  document.getElementById("settings-modal").classList.add("hidden");
+}
+
+function renderJikou() {
+  const el = document.getElementById("jikou-list");
+  el.innerHTML = prefs.忌口.map(x =>
+    `<span class="tag">${x}<span class="tag-remove" onclick="removeJikou('${x}')">×</span></span>`
+  ).join("");
+}
+
+function addJikou() {
+  const inp = document.getElementById("jikou-input");
+  const val = inp.value.trim();
+  if (!val || prefs.忌口.includes(val)) { inp.value = ""; return; }
+  prefs.忌口.push(val);
+  saveLocalPrefs();
+  renderJikou();
+  inp.value = "";
+}
+
+function removeJikou(item) {
+  prefs.忌口 = prefs.忌口.filter(x => x !== item);
+  saveLocalPrefs();
+  renderJikou();
+}
+
+function renderPrefTags() {
+  const el = document.getElementById("pref-list");
+  el.innerHTML = ALL_TAGS.map(t => {
+    const active = (prefs.偏好_tags[t] || 0) >= 1.5;
+    return `<span class="tag-selectable${active ? " selected" : ""}" onclick="togglePrefTag('${t}')">${t}</span>`;
+  }).join("");
+}
+
+function togglePrefTag(tag) {
+  if (prefs.偏好_tags[tag] && prefs.偏好_tags[tag] >= 1.5) {
+    delete prefs.偏好_tags[tag];
+  } else {
+    prefs.偏好_tags[tag] = 2;
+  }
+  saveLocalPrefs();
+  renderPrefTags();
+}
+
+function renderNile() {
+  const el = document.getElementById("nile-list");
+  prefs.腻了 = LS.get("腻了", []);
+  el.innerHTML = prefs.腻了.length === 0 ? '<span style="font-size:13px;color:var(--text-dim)">暂无</span>' :
+    prefs.腻了.map(x => `<span class="tag">${x}<span class="tag-remove" onclick="removeNile('${x}')">×</span></span>`).join("");
+}
+
+function removeNile(item) {
+  prefs.腻了 = prefs.腻了.filter(x => x !== item);
+  LS.set("腻了", prefs.腻了);
+  saveLocalPrefs();
+  renderNile();
+}
+
+function clearNile() {
+  prefs.腻了 = [];
+  LS.set("腻了", []);
+  saveLocalPrefs();
+  renderNile();
+}
+
+// ============ AI 偏好分析 ============
+async function aiAnalyze() {
+  const input = document.getElementById("ai-input").value.trim();
+  if (!input) return;
+  if (!AI_API_KEY) {
+    document.getElementById("ai-status").textContent = "请先配置 AI_API_KEY";
+    return;
+  }
+
+  const btn = document.getElementById("ai-btn");
+  const status = document.getElementById("ai-status");
+  btn.disabled = true;
+  status.textContent = "分析中…";
+
+  const prompt = `你是一个食物偏好分析助手。根据用户输入，输出 JSON（仅 JSON，不要其他文字）：
+
+{"忌口":["具体食物名"],"排除tag":["标签名"],"偏好tag":["标签名"],"解释":"一句简短解释"}
+
+可用标签：${ALL_TAGS.join("、")}
+
+规则：
+- 忌口=用户明确不吃的具体食物（如"海鲜"→忌口"海鲜"；"韭菜"→忌口"韭菜"）
+- 排除tag=用户不想要的食物类型（如"不吃辣的"→排除tag包含"重口"；"不吃生的"→排除tag包含"生食"）
+- 偏好tag=用户偏好的类型（如"想吃粤菜"→偏好tag包含"广式"；"清淡"→偏好tag包含"清淡"）
+- 解释=一句简短的人话总结
+
+用户输入：${input}`;
+
+  try {
+    const res = await fetch(`${AI_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${AI_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0,
+        max_tokens: 300
+      })
+    });
+
+    const data = await res.json();
+    const text = data?.choices?.[0]?.message?.content || "";
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("AI 返回格式异常");
+
+    const result = JSON.parse(jsonMatch[0]);
+    loadLocalPrefs();
+
+    // 合并忌口
+    for (const j of (result.忌口 || [])) {
+      if (!prefs.忌口.includes(j)) prefs.忌口.push(j);
+    }
+    // 合并偏好tag
+    for (const t of (result.偏好tag || [])) {
+      prefs.偏好_tags[t] = 2;
+    }
+    // 合并排除tag（转成偏好tag的负向——但当前系统没有排除tag概念，改用忌口方式）
+    saveLocalPrefs();
+    renderJikou();
+    renderPrefTags();
+    renderNile();
+    status.textContent = result.解释 || "已更新！";
+  } catch (e) {
+    status.textContent = "分析失败: " + e.message;
+  }
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>

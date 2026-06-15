@@ -1,0 +1,429 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --bg: #faf8f5;
+  --card: #ffffff;
+  --text: #3d3a38;
+  --text-dim: #8c8a87;
+  --accent: #f0a060;
+  --accent-hover: #e08840;
+  --border: #e8e4df;
+  --tag-bg: #f5f0eb;
+  --success: #7cb87c;
+  --danger: #d97373;
+  --radius: 16px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.06);
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  line-height: 1.6;
+}
+
+/* ========== Auth Modal ========== */
+.auth-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 48px 40px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  max-width: 400px;
+  width: 90%;
+}
+
+.auth-logo { font-size: 64px; margin-bottom: 16px; }
+.auth-card h2 { font-size: 24px; margin-bottom: 8px; }
+.auth-desc { color: var(--text-dim); font-size: 14px; margin-bottom: 32px; }
+
+.btn-auth {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.btn-auth:hover { background: var(--accent-hover); transform: translateY(-1px); }
+.btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+.btn-outline:hover { background: var(--tag-bg); }
+
+.email-form { margin-top: 16px; }
+.email-form input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 15px;
+  margin-bottom: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.email-form input:focus { border-color: var(--accent); }
+.email-form .hint { font-size: 12px; color: var(--text-dim); margin-top: 8px; }
+
+/* ========== Entry ========== */
+.btn-start {
+  margin-top: 24px;
+  padding: 14px 48px;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  color: white;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-start:hover { background: var(--accent-hover); transform: translateY(-2px); }
+.btn-start:active { transform: translateY(0); }
+
+/* ========== Main App ========== */
+#app {
+  width: 100%;
+  max-width: 480px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+}
+
+.header-left { display: flex; align-items: center; gap: 10px; }
+.logo { font-size: 28px; }
+.title { font-size: 18px; font-weight: 700; }
+
+.header-right { display: flex; align-items: center; gap: 8px; }
+
+.period-badge {
+  background: var(--accent);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.btn-icon {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background 0.2s;
+}
+.btn-icon:hover { background: var(--tag-bg); }
+
+/* ========== Food Card ========== */
+main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 24px;
+}
+
+.food-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 48px 32px;
+  text-align: center;
+  box-shadow: var(--shadow);
+  width: 100%;
+  margin-top: 20px;
+  transition: transform 0.3s, opacity 0.3s;
+}
+
+.food-card.rolling {
+  transform: scale(0.95);
+  opacity: 0.5;
+}
+
+.food-emoji {
+  font-size: 72px;
+  margin-bottom: 16px;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.food-name {
+  font-size: 28px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.food-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+
+.tag {
+  background: var(--tag-bg);
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ========== Actions ========== */
+.actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 24px;
+  width: 100%;
+}
+
+.btn-action {
+  flex: 1;
+  padding: 14px 8px;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.btn-refresh {
+  background: var(--tag-bg);
+  color: var(--text);
+}
+.btn-refresh:hover { background: var(--border); }
+
+.btn-nile {
+  background: #fff0f0;
+  color: var(--danger);
+}
+.btn-nile:hover { background: #ffe0e0; }
+
+.btn-keep {
+  background: var(--accent);
+  color: white;
+}
+.btn-keep:hover { background: var(--accent-hover); }
+
+/* ========== History ========== */
+.history-section {
+  width: 100%;
+  margin-top: 32px;
+  margin-bottom: 40px;
+}
+
+.history-section h3 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  color: var(--text-dim);
+}
+
+.history-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.history-item {
+  background: var(--card);
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 14px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-item .time {
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.empty-hint {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* ========== Footer ========== */
+footer {
+  text-align: center;
+  padding: 16px;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+/* ========== Settings Panel ========== */
+.settings-panel {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+}
+
+.settings-card {
+  background: var(--card);
+  border-radius: var(--radius);
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  max-width: 440px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.settings-header h3 { font-size: 20px; }
+
+.settings-section {
+  margin-bottom: 24px;
+}
+
+.settings-section h4 {
+  font-size: 15px;
+  margin-bottom: 4px;
+}
+
+.hint {
+  font-size: 12px;
+  color: var(--text-dim);
+  margin-bottom: 10px;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.tag-list .tag {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tag-list .tag .remove {
+  cursor: pointer;
+  opacity: 0.5;
+  font-size: 14px;
+}
+.tag-list .tag .remove:hover { opacity: 1; }
+
+.tag-list.selectable .tag {
+  transition: all 0.2s;
+  border: 2px solid transparent;
+}
+
+.tag-list.selectable .tag.selected {
+  border-color: var(--accent);
+  background: #fff8f0;
+}
+
+.add-tag {
+  display: flex;
+  gap: 8px;
+}
+
+.add-tag input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  font-size: 14px;
+  outline: none;
+}
+.add-tag input:focus { border-color: var(--accent); }
+
+.btn-small {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  cursor: pointer;
+  background: var(--accent);
+  color: white;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn-small:hover { background: var(--accent-hover); }
+.btn-small.btn-outline { background: transparent; border: 2px solid var(--border); color: var(--text); }
+
+.btn-login {
+  padding: 6px 16px;
+  border: 2px solid var(--accent);
+  border-radius: 20px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-login:hover { background: var(--accent); color: white; }
+
+/* ========== Modal ========== */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.3);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 200;
+}
+
+.auth-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+/* ========== Utility ========== */
+.hidden { display: none !important; }
+
+/* ========== Mobile ========== */
+@media (max-width: 480px) {
+  .food-card { padding: 36px 24px; }
+  .food-emoji { font-size: 56px; }
+  .food-name { font-size: 24px; }
+  .actions { flex-direction: column; }
+  .auth-card { padding: 32px 24px; }
+  .settings-card { padding: 24px; }
+}
