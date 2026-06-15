@@ -185,9 +185,11 @@
 
 <script src="config.js"></script>
 <script>
-// 兜底：config.js 没加载时也能正常选餐（AI 功能需要配置后才能用）
-var SUPABASE_URL = typeof SUPABASE_URL !== 'undefined' ? SUPABASE_URL : "";
-var SUPABASE_KEY = typeof SUPABASE_KEY !== 'undefined' ? SUPABASE_KEY : "";
+// Supabase 配置（publishable key，可以公开）
+const SUPABASE_URL = "https://cyyasfnszzcctyejguzl.supabase.co";
+const SUPABASE_KEY = "sb_publishable_tbI1CaX_jOpsiR4RttNVrw_X5ypb3Sr";
+
+// AI 配置兜底（config.js 没加载时也能正常选餐，只是 AI 功能暂不可用）
 var AI_BASE_URL = typeof AI_BASE_URL !== 'undefined' ? AI_BASE_URL : "";
 var AI_API_KEY = typeof AI_API_KEY !== 'undefined' ? AI_API_KEY : "";
 var AI_MODEL = typeof AI_MODEL !== 'undefined' ? AI_MODEL : "";
