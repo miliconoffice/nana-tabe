@@ -54,4 +54,4 @@ cp config.example.js config.js
 
 ## 📄 License
 
-CC BY-NC-SA 4.0 — 非商用 · 署名 · 相同方式共享。用了就得开源哦 (｀・ω・´)
+CC BY-NC-SA 4.0 — 不商用 · 署名 · 基于它做的东西也请开放出来哦 (´▽｀)
