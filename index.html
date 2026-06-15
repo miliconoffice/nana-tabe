@@ -194,16 +194,15 @@
   </div>
 </div>
 
-<script src="config.js"></script>
 <script>
 // Supabase 配置（publishable key，可以公开）
 const SUPABASE_URL = "https://cyyasfnszzcctyejguzl.supabase.co";
 const SUPABASE_KEY = "sb_publishable_tbI1CaX_jOpsiR4RttNVrw_X5ypb3Sr";
 
-// AI 配置兜底（config.js 没加载时也能正常选餐，只是 AI 功能暂不可用）
-var AI_BASE_URL = typeof AI_BASE_URL !== 'undefined' ? AI_BASE_URL : "";
-var AI_API_KEY = typeof AI_API_KEY !== 'undefined' ? AI_API_KEY : "";
-var AI_MODEL = typeof AI_MODEL !== 'undefined' ? AI_MODEL : "";
+// AI 配置
+const AI_BASE_URL = "https://www.dmxapi.cn/v1";
+const AI_API_KEY = "sk-BspqGURVVUHPdIsp0ytoSLfKOgqWlVSkIdok8i8tHIoMLuAR";
+const AI_MODEL = "kimi-k2.5-free";
 
 // ============ 食物库 ============
 const FOOD_DB = {
